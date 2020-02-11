@@ -5,22 +5,21 @@
   
 
   
-  <title>关于异常处理 | Volcanno</title>
+  <title>彻底搞懂时间问题 | Volcanno</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="异常处理需要考虑的三个问题处理程序异常，需要解决以下3个问题：  Where：哪个地方发生了异常？ Who: 谁来处理异常？ How： 如何处理异常？  平时自己在写代码的时候，经常会纠结，我这个代码发生了异常，这个异常是需要向外抛出给调用者，还是要自己处理？《码出高效》给出这样一个基本原则：  如果异常在当前方法的处理能力范围之内且没有必要对外透出，那么就直接捕获异常并做相应的处理；否则就向上抛">
+  <meta name="description" content="最近工作遇到了这个问题，之前反复整改，自己不够重视，这次终于吃了一次大亏。 timestamp时间戳的定义：从1970年1月1日0时0分0秒(UTC时间，及0时区)起至现在的总秒数。只能一直存在的疑问是，时区问题，其实这个时间戳的概念是根本不存在时区问题的。全球各地的时间戳都是一样的。也就是说，从1970年1月1日0时0分0秒(UTC时间，及0时区)开始，全球各地同时开始计数，所以这个数字不管到哪">
 <meta property="og:type" content="article">
-<meta property="og:title" content="关于异常处理">
-<meta property="og:url" content="http://yoursite.com/2019/01/06/%E5%85%B3%E4%BA%8E%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86/index.html">
+<meta property="og:title" content="彻底搞懂时间问题">
+<meta property="og:url" content="http://yoursite.com/2019/01/10/java/%E5%BD%BB%E5%BA%95%E6%90%9E%E6%87%82%E6%97%B6%E9%97%B4%E9%97%AE%E9%A2%98/index.html">
 <meta property="og:site_name" content="Volcanno">
-<meta property="og:description" content="异常处理需要考虑的三个问题处理程序异常，需要解决以下3个问题：  Where：哪个地方发生了异常？ Who: 谁来处理异常？ How： 如何处理异常？  平时自己在写代码的时候，经常会纠结，我这个代码发生了异常，这个异常是需要向外抛出给调用者，还是要自己处理？《码出高效》给出这样一个基本原则：  如果异常在当前方法的处理能力范围之内且没有必要对外透出，那么就直接捕获异常并做相应的处理；否则就向上抛">
+<meta property="og:description" content="最近工作遇到了这个问题，之前反复整改，自己不够重视，这次终于吃了一次大亏。 timestamp时间戳的定义：从1970年1月1日0时0分0秒(UTC时间，及0时区)起至现在的总秒数。只能一直存在的疑问是，时区问题，其实这个时间戳的概念是根本不存在时区问题的。全球各地的时间戳都是一样的。也就是说，从1970年1月1日0时0分0秒(UTC时间，及0时区)开始，全球各地同时开始计数，所以这个数字不管到哪">
 <meta property="og:locale" content="zh">
-<meta property="article:published_time" content="2019-01-06T14:53:03.000Z">
-<meta property="article:modified_time" content="2020-02-08T13:07:26.446Z">
+<meta property="article:published_time" content="2019-01-09T16:23:46.000Z">
+<meta property="article:modified_time" content="2020-02-08T13:07:26.448Z">
 <meta property="article:author" content="Volcanno Vayne">
-<meta property="article:tag" content="Java">
-<meta property="article:tag" content="Exception">
-<meta property="article:tag" content="Easy Coding">
-<meta property="article:tag" content="Book">
+<meta property="article:tag" content="timestamp">
+<meta property="article:tag" content="js">
+<meta property="article:tag" content="苦痛">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternate" href="/atom.xml" title="Volcanno" type="application/atom+xml">
@@ -82,16 +81,12 @@
 </header>
 
       <div class="outer">
-        <section id="main"><article id="post-关于异常处理" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-java/彻底搞懂时间问题" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2019/01/06/%E5%85%B3%E4%BA%8E%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86/" class="article-date">
-  <time datetime="2019-01-06T14:53:03.000Z" itemprop="datePublished">2019-01-06</time>
+    <a href="/2019/01/10/java/%E5%BD%BB%E5%BA%95%E6%90%9E%E6%87%82%E6%97%B6%E9%97%B4%E9%97%AE%E9%A2%98/" class="article-date">
+  <time datetime="2019-01-09T16:23:46.000Z" itemprop="datePublished">2019-01-10</time>
 </a>
     
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/Book/">Book</a>►<a class="article-category-link" href="/categories/Book/Easy-Coding/">Easy Coding</a>
-  </div>
-
   </div>
   <div class="article-inner">
     
@@ -100,7 +95,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      关于异常处理
+      彻底搞懂时间问题
     </h1>
   
 
@@ -108,30 +103,28 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="异常处理需要考虑的三个问题"><a href="#异常处理需要考虑的三个问题" class="headerlink" title="异常处理需要考虑的三个问题"></a>异常处理需要考虑的三个问题</h2><p>处理程序异常，需要解决以下3个问题：</p>
-<ol>
-<li><code>Where</code>：哪个地方发生了异常？</li>
-<li><code>Who</code>: 谁来处理异常？</li>
-<li><code>How</code>： 如何处理异常？</li>
-</ol>
-<p>平时自己在写代码的时候，经常会纠结，我这个代码发生了异常，这个异常是需要向外抛出给调用者，还是要自己处理？《码出高效》给出这样一个基本原则：</p>
-<blockquote>
-<p>如果异常在当前方法的处理能力范围之内且没有必要对外透出，那么就直接捕获异常并做相应的处理；否则就向上抛出，由上层方法或者框架来处理。</p>
-</blockquote>
-<p>以<code>FileNotFound</code>为例子。读取一个文件，如果文件不存在，这个异常是需要对外抛出还是自己处理呢？其他方法跟该方法交互的时候，一般会期待该方法：1. 根据文件内容进行一些设置（例如设置环境变量，实例化一些config等）2. 返回内容。当文件读取这个阶段出错的时候，我们是需要及时对调用方返回状态信息的。如果什么都不做，可能就会导致调用方误认为被调用方工作正常，从而导致调用方后续依赖调用方本次工作结果的工作发生异常。此时，及时反馈就很重要了。所以个人认为，在读文件这个操作对一些环境设置负责的时候，如果发生异常，需要向上抛出。具体需要依赖场景。以下是我认为的一些典型场景：</p>
-<ul>
-<li>读取文件内容负责对外返回一定的处理信息。调用方和被调用方之间如果具有一定的契约（例如，约定返回<code>Null</code>就是出现异常），那么此时调用方可以对异常进行处理而不对外抛出。如果没有明确的约定，那么最佳实践就是抛出异常，在语法层面要求被调用方对异常进行处理。</li>
-</ul>
-<h2 id="关于空指针异常"><a href="#关于空指针异常" class="headerlink" title="关于空指针异常"></a>关于空指针异常</h2><p>书中提到了2种编程理念：1. 契约式编程 2. 防御式编程 </p>
-<p>推荐拥抱防御式编程的理念（感觉跟我司的“人性本恶”有一拼^_^），即不信任任何一方的输入和输出。当然这是相对的，否则又会陷入无限判空的地狱中。</p>
+        <p>最近工作遇到了这个问题，之前反复整改，自己不够重视，这次终于吃了一次大亏。</p>
+<h2 id="timestamp"><a href="#timestamp" class="headerlink" title="timestamp"></a><code>timestamp</code></h2><p>时间戳的定义：从<code>1970</code>年<code>1</code>月<code>1</code>日<code>0</code>时<code>0</code>分<code>0</code>秒(UTC时间，及0时区)起至现在的总秒数。<br>只能一直存在的疑问是，时区问题，其实这个时间戳的概念是根本不存在时区问题的。全球各地的时间戳都是一样的。也就是说，从<code>1970</code>年<code>1</code>月<code>1</code>日<code>0</code>时<code>0</code>分<code>0</code>秒(UTC时间，及0时区)开始，全球各地同时开始计数，所以这个数字不管到哪里都是一样。</p>
+<h2 id="UTC时间"><a href="#UTC时间" class="headerlink" title="UTC时间"></a><code>UTC</code>时间</h2><p>这个就跟时区有关了。又称为<code>协调世界时</code>，和<code>0</code>时区的时间一致。</p>
+<h2 id="东八区"><a href="#东八区" class="headerlink" title="东八区"></a>东八区</h2><p>这个就是北京时间了。</p>
+<h2 id="JS中关于时间的一些转换"><a href="#JS中关于时间的一些转换" class="headerlink" title="JS中关于时间的一些转换"></a><code>JS</code>中关于时间的一些转换</h2><p><code>JS</code>中一般都要用<code>Date</code>对象：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">Date</span>();</span><br></pre></td></tr></table></figure>
+<p>这个在<code>windows</code>系统上，得到的时间是本机设定的时区时间。大家一般都是东八区。<br>得到时间戳：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">Date</span>().getTime();</span><br></pre></td></tr></table></figure>
+<p>如果已经有了时间戳，可以这样得到对应的<code>UTC</code>时间：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">Date</span>(xxxxxx).toISOString();</span><br></pre></td></tr></table></figure>
+<p>这样得到的时间格式是这样的：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">"2019-01-09T16:37:34.662Z"</span><br></pre></td></tr></table></figure>
+
+<p>题外话：<code>ES</code>查询时，如果传入一个时间戳，他会根据你ES机器的时区进行转换(如果你数据存储的时候用的是<code>utc</code>时间)，MDZZ。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/06/%E5%85%B3%E4%BA%8E%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86/" data-id="ck6ens9oc0007hkqsd2x2eekq" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/10/java/%E5%BD%BB%E5%BA%95%E6%90%9E%E6%87%82%E6%97%B6%E9%97%B4%E9%97%AE%E9%A2%98/" data-id="ck6i4j9w50012o8qs9j3qgpoj" class="article-share-link">Share</a>
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Book/" rel="tag">Book</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Easy-Coding/" rel="tag">Easy Coding</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Exception/" rel="tag">Exception</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Java/" rel="tag">Java</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/js/" rel="tag">js</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/timestamp/" rel="tag">timestamp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%8B%A6%E7%97%9B/" rel="tag">苦痛</a></li></ul>
 
 
     </footer>
@@ -140,15 +133,20 @@
     
 <nav id="article-nav">
   
-    <a href="/2019/01/06/java/%E5%85%B3%E4%BA%8EJAVA%E5%86%85%E9%83%A8%E7%B1%BB%E7%9A%84%E4%B8%80%E4%BA%9B%E6%80%9D%E8%80%83/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2019/01/10/Docker/Docker%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8/" id="article-nav-newer" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Newer</strong>
       <div class="article-nav-title">
         
-          关于JAVA内部类的一些思考
+          Docker中的容器
         
       </div>
     </a>
   
+  
+    <a href="/2019/01/09/Docker/Docker%E5%9F%BA%E7%A1%80%E6%93%8D%E4%BD%9C/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Docker基础操作</div>
+    </a>
   
 </nav>
 
@@ -209,7 +207,7 @@
           </li>
         
           <li>
-            <a href="/2020/02/08/hello-world/">Hello World</a>
+            <a href="/2020/02/08/other/hello-world/">Hello World</a>
           </li>
         
           <li>
