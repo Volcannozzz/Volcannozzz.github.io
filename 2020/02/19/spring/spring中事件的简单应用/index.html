@@ -7,15 +7,15 @@
   
   <title>spring中事件的简单应用 | Volcanno</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="spring中的事件也是根据jdk中的事件发展而来的.   定义事件.  定义发布者publisher,发布者也是事件源,会被事件所持有,同时,会发布事件到事件的监听者.  定义事件监听者,事件监听者负责处理事件.   spring中,定义一个事件,只需要继承ApplicationEvent类即可.  定义一个发布者,可以把发布者定义为一个bean,同时,把发布任务委托给spring框架中自带的b">
+  <meta name="description" content="spring中的事件也是根据jdk中的事件发展而来的.   定义事件.  定义发布者publisher,发布者也是事件源,会被事件所持有,同时,会发布事件到事件的监听者.  定义事件监听者,事件监听者负责处理事件.   1. 事件spring中,定义一个事件,只需要继承ApplicationEvent类即可.  2. 发布者定义一个发布者,可以把发布者定义为一个bean,同时,把发布任务委托给sp">
 <meta property="og:type" content="article">
 <meta property="og:title" content="spring中事件的简单应用">
 <meta property="og:url" content="http://yoursite.com/2020/02/19/spring/spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E7%9A%84%E7%AE%80%E5%8D%95%E5%BA%94%E7%94%A8/index.html">
 <meta property="og:site_name" content="Volcanno">
-<meta property="og:description" content="spring中的事件也是根据jdk中的事件发展而来的.   定义事件.  定义发布者publisher,发布者也是事件源,会被事件所持有,同时,会发布事件到事件的监听者.  定义事件监听者,事件监听者负责处理事件.   spring中,定义一个事件,只需要继承ApplicationEvent类即可.  定义一个发布者,可以把发布者定义为一个bean,同时,把发布任务委托给spring框架中自带的b">
+<meta property="og:description" content="spring中的事件也是根据jdk中的事件发展而来的.   定义事件.  定义发布者publisher,发布者也是事件源,会被事件所持有,同时,会发布事件到事件的监听者.  定义事件监听者,事件监听者负责处理事件.   1. 事件spring中,定义一个事件,只需要继承ApplicationEvent类即可.  2. 发布者定义一个发布者,可以把发布者定义为一个bean,同时,把发布任务委托给sp">
 <meta property="og:locale" content="zh">
 <meta property="article:published_time" content="2020-02-19T15:28:34.000Z">
-<meta property="article:modified_time" content="2020-02-19T15:37:59.678Z">
+<meta property="article:modified_time" content="2020-02-19T15:48:52.711Z">
 <meta property="article:author" content="Volcanno Vayne">
 <meta property="article:tag" content="java">
 <meta property="article:tag" content="spring">
@@ -114,14 +114,14 @@
 <li>定义发布者<code>publisher</code>,发布者也是事件源,会被事件所持有,同时,会发布事件到事件的监听者. </li>
 <li>定义事件监听者,事件监听者负责处理事件. </li>
 </ol>
-<p><code>spring</code>中,定义一个事件,只需要继承<code>ApplicationEvent</code>类即可. </p>
-<p>定义一个发布者,可以把发布者定义为一个<code>bean</code>,同时,把发布任务委托给<code>spring</code>框架中自带的<code>bean</code>:<code>ApplicationEventPublisher</code>实例.在发布者中<br>生产事件和发布事件(即通知监听者). </p>
+<h3 id="1-事件"><a href="#1-事件" class="headerlink" title="1. 事件"></a>1. 事件</h3><p><code>spring</code>中,定义一个事件,只需要继承<code>ApplicationEvent</code>类即可. </p>
+<h3 id="2-发布者"><a href="#2-发布者" class="headerlink" title="2. 发布者"></a>2. 发布者</h3><p>定义一个发布者,可以把发布者定义为一个<code>bean</code>,同时,把发布任务委托给<code>spring</code>框架中自带的<code>bean</code>:<code>ApplicationEventPublisher</code>实例.在发布者中<br>生产事件和发布事件(即通知监听者). </p>
 <h3 id="3-监听者-Listener"><a href="#3-监听者-Listener" class="headerlink" title="3. 监听者(Listener)"></a>3. 监听者(<code>Listener</code>)</h3><p>在<code>5.x</code>版本的<code>spring</code>中,只需要在一个<code>public</code>方法上加上<code>@EventListener</code>注解即可,当然事件跟监听者是一对多的关系,所以可以定义多个监听者,此时<br>可以用<code>@Order</code>进行有序监听.</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2020/02/19/spring/spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E7%9A%84%E7%AE%80%E5%8D%95%E5%BA%94%E7%94%A8/" data-id="ck6thfgzs001po4qs4wqcey0i" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2020/02/19/spring/spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E7%9A%84%E7%AE%80%E5%8D%95%E5%BA%94%E7%94%A8/" data-id="ck6thsxp5001xukqs88fw1l3w" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/event/" rel="tag">event</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/publisher/" rel="tag">publisher</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/spring/" rel="tag">spring</a></li></ul>
