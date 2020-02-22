@@ -76,6 +76,69 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-k8s/k8s中的service简要介绍" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/01/20/k8s/k8s%E4%B8%AD%E7%9A%84service%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D/" class="article-date">
+  <time datetime="2019-01-20T12:32:37.000Z" itemprop="datePublished">2019-01-20</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/01/20/k8s/k8s%E4%B8%AD%E7%9A%84service%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D/">k8s中的service简要介绍</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><code>service</code>是<code>k8s</code>中最核心的资源对象之一。</p>
+<p><code>RC</code>的作用是维持<code>pod</code>集群的一系列数量指标，保证<code>service</code>的服务能力和服务质量始终处于预期的标准范围内。</p>
+<p><code>k8s</code>中的<code>service</code>定义了一个服务的访问入口地址，这个地址是提供为集群内的其他<code>service</code>使用的。<code>service</code>提供的<code>cluster ip</code>，只在<code>k8s</code>内部有意义。</p>
+<p>每个<code>service</code>背后对应的都是一个<code>pod</code>集群，所以访问一个服务的时候，必定需要一个负载均衡算法来支撑。</p>
+<h2 id="k8s中服务通信"><a href="#k8s中服务通信" class="headerlink" title="k8s中服务通信"></a><code>k8s</code>中服务通信</h2><p>运行在<code>node</code>上的<code>kube-proxy</code>进程其实就是一个智能的软件负载均衡器，它负责把本<code>node</code>上对<code>service</code>的请求转发到后端的某个<code>pod</code>上，并在内部实现服务的负载均衡和会话保持机制。与<code>service</code>通信的时候，肯定是不能直接使用<code>ip</code>地址（因为未知），会用服务名来进行通信，因此就需要一种机制来做<code>ip</code>到服务名的映射。显然，<code>dns</code>正好符合要求（环境变量注入的方式也可以提供相同的功能）。</p>
+<p>一个典型的<code>service</code>定义文件如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line"> name: tomcat-service</span><br><span class="line">spec:</span><br><span class="line"> ports:</span><br><span class="line"> - port: 8080</span><br><span class="line"> selector:</span><br><span class="line">  tier: frontend</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，服务<code>tomcat-service</code>的服务端口为<code>8080</code>，拥有<code>tier:frontend</code>标签的<code>pod</code>都属于他。</p>
+<p>创建命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create -f tomcat-server.yaml</span><br></pre></td></tr></table></figure>
+
+<h2 id="服务发现机制"><a href="#服务发现机制" class="headerlink" title="服务发现机制"></a>服务发现机制</h2><p>一句话概括，服务发现的过程，就是把服务名替换为<code>ip:port</code>的过程。</p>
+<h3 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h3><p>在<code>pod</code>启动的时候，按照一定规范和约定，在<code>pod</code> 的环境变量中，注入所有的服务的信息。<code>pod</code>要访问某个服务时，就从自己本地的环境变量取出。</p>
+<p>考虑到环境变量的方式获取<code>service</code>的<code>ip</code>和<code>port</code>的方式仍然不太方便，不够直观，后来<code>k8s</code>通过<code>Add-on</code>增值包的方式引入了<code>DNS</code>系统，把服务名作为<code>DNS</code>域名，这样以来，程序就可以直接使用服务名来建立通信连接了。</p>
+<h2 id="外部系统访问service的问题"><a href="#外部系统访问service的问题" class="headerlink" title="外部系统访问service的问题"></a>外部系统访问<code>service</code>的问题</h2><p>三种<code>ip</code>：</p>
+<ul>
+<li><code>Node IP</code>: 实打实的网卡的<code>ip</code>；</li>
+<li><code>Pod IP</code>: 根据<code>docker0</code>网桥的<code>ip</code>地址段进行分配的，通常是一个虚拟的二层网络。另外，<code>k8s</code>要求位于不同<code>node</code>上的<code>pod</code>能够彼此直接通信，所以<code>k8s</code>里的<code>pod</code>能够直接访问另外一个<code>pod</code>。</li>
+<li><code>Cluster IP</code>:虚拟的<code>IP</code>。属于<code>k8s</code>集群这样一个封闭的空间。如果需要提供外部访问，要做一些额外的工作。</li>
+</ul>
+<p>某些服务模块就是用来提供给外部使用的，那么用户如何访问？<br><code>service</code>定义扩展：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line"> name: tomcat-service</span><br><span class="line">spec:</span><br><span class="line"> type: NOdePort</span><br><span class="line"> ports:</span><br><span class="line">  - port: 8080</span><br><span class="line">    nodePort: 31002</span><br><span class="line"> selector:</span><br><span class="line">  tier: frontend</span><br></pre></td></tr></table></figure>
+<p>这样，服务<code>31002</code>就暴露出来了。<br><code>NodePort</code>的实现方式是，在<code>k8s</code>集群的每个<code>NOde</code>上为需要外部访问的<code>service</code>开启一个对应的<code>tcp</code>监听端口，外部系统只要用任意一个<code>node</code>的<code>IP</code>地址+具体的<code>NodePort</code>端口号就可以访问该服务。<br>问题：这种方式仍未解决所有问题，比如负载均衡问题，这是就需要一个集群之外的负载均衡组件来实施负载均衡。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2019/01/20/k8s/k8s%E4%B8%AD%E7%9A%84service%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D/" data-id="ck6xukkaf001oy8qs8dck175p" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/" rel="tag">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag">微服务</a></li></ul>
+
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-k8s/k8s入门" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2019/01/14/k8s/k8s%E5%85%A5%E9%97%A8/" class="article-date">
@@ -147,7 +210,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/14/k8s/k8s%E5%85%A5%E9%97%A8/" data-id="ck6thsxoq001hukqs3p0146yj" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/14/k8s/k8s%E5%85%A5%E9%97%A8/" data-id="ck6xukkat0029y8qs2uh04z1f" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/" rel="tag">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/pend/" rel="tag">pend</a></li></ul>
@@ -191,7 +254,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/13/Docker/Docker%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/" data-id="ck6thsxni000cukqs6yul1xy6" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/13/Docker/Docker%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/" data-id="ck6xukk9l000vy8qs24ig9hqg" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/pending/" rel="tag">pending...</a></li></ul>
@@ -251,7 +314,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/13/Docker/Docker%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE/" data-id="ck6thsxnm000gukqsby9p9cj2" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/13/Docker/Docker%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE/" data-id="ck6xukk9g000ry8qs3klp87iv" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE/" rel="tag">网络配置</a></li></ul>
@@ -309,7 +372,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/13/Docker/Dockerfile%E6%96%B9%E5%BC%8F%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/" data-id="ck6thsxnk000dukqs720eejd5" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/13/Docker/Dockerfile%E6%96%B9%E5%BC%8F%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/" data-id="ck6xukk91000dy8qs4cby84v3" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag">微服务</a></li></ul>
@@ -356,7 +419,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/13/%E5%85%B3%E4%BA%8E%E4%B8%AA%E4%BA%BA%E5%8F%91%E5%B1%95%E7%9A%84%E4%B8%80%E4%BA%9B%E6%80%9D%E8%80%83/" data-id="ck6thsxly0003ukqsgn8lfkes" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/13/%E5%85%B3%E4%BA%8E%E4%B8%AA%E4%BA%BA%E5%8F%91%E5%B1%95%E7%9A%84%E4%B8%80%E4%BA%9B%E6%80%9D%E8%80%83/" data-id="ck6xukk820003y8qsbia0ea4e" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/life/" rel="tag">life</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/thinking/" rel="tag">thinking</a></li></ul>
@@ -411,7 +474,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/11/Docker/%E7%AC%AC%E4%B8%80%E4%B8%AADockerfile%E7%A4%BA%E4%BE%8B/" data-id="ck6thsxnp000iukqs0vl995nf" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/11/Docker/%E7%AC%AC%E4%B8%80%E4%B8%AADockerfile%E7%A4%BA%E4%BE%8B/" data-id="ck6xukk9e000ny8qs4v9dh2n1" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Dockerfile/" rel="tag">Dockerfile</a></li></ul>
@@ -487,7 +550,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/10/Docker/Docker%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8/" data-id="ck6thsxpn002cukqsg2r83ln6" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/10/Docker/Docker%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8/" data-id="ck6xukk95000gy8qs54yx6xdr" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AE%B9%E5%99%A8/" rel="tag">容器</a></li></ul>
@@ -540,7 +603,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/10/java/%E5%BD%BB%E5%BA%95%E6%90%9E%E6%87%82%E6%97%B6%E9%97%B4%E9%97%AE%E9%A2%98/" data-id="ck6thsxoh0013ukqscl1x0ltw" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/10/java/%E5%BD%BB%E5%BA%95%E6%90%9E%E6%87%82%E6%97%B6%E9%97%B4%E9%97%AE%E9%A2%98/" data-id="ck6xukka5001ey8qs82zchukn" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/js/" rel="tag">js</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/timestamp/" rel="tag">timestamp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%8B%A6%E7%97%9B/" rel="tag">苦痛</a></li></ul>
@@ -615,62 +678,10 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/09/Docker/Docker%E5%9F%BA%E7%A1%80%E6%93%8D%E4%BD%9C/" data-id="ck6thsxnt000lukqsa9n96xus" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/09/Docker/Docker%E5%9F%BA%E7%A1%80%E6%93%8D%E4%BD%9C/" data-id="ck6xukk90000cy8qsb7rcdwwt" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li></ul>
-
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-Docker/初识Docker" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/01/08/Docker/%E5%88%9D%E8%AF%86Docker/" class="article-date">
-  <time datetime="2019-01-07T16:41:25.000Z" itemprop="datePublished">2019-01-08</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/01/08/Docker/%E5%88%9D%E8%AF%86Docker/">初识Docker</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>以我的理解，<code>Docker</code>类似于闭包，把一个应用或者其他的东西以及其需要的生存环境全部打包起来，使用该应用的时候，就不需要配置各种环境了，直接使用这个打包起来的东西就好。</p>
-<p>优势（来自教科书）：</p>
-<ul>
-<li>更快速的交付和部署；</li>
-<li>更搞笑的资源利用；</li>
-<li>更简单的更新管理；</li>
-<li>更轻松的迁移和扩展；</li>
-</ul>
-<h2 id="核心概念"><a href="#核心概念" class="headerlink" title="核心概念"></a>核心概念</h2><h3 id="1-image（镜像）"><a href="#1-image（镜像）" class="headerlink" title="1. image（镜像）"></a>1. <code>image</code>（镜像）</h3><p>镜像，顾名思义，就是个镜子，专门用来复制出实例的。可以类比<code>java</code>语言中的<code>class</code>。不同的是<code>image</code>的作用是用来创建镜像实例，也就是<code>container</code>。</p>
-<h3 id="2-container（容器）"><a href="#2-container（容器）" class="headerlink" title="2. container（容器）"></a>2. <code>container</code>（容器）</h3><p>容器是一个真正的运行着的活的东西。是根据<code>image</code>创建出来的。可以想象成一个正在运行的系统。</p>
-<p>容器从镜像启动的时候，<code>Docker</code>会在镜像的最上层创建一个可写层。镜像本身 <strong>只读</strong>，因此镜像可以保持不变。</p>
-<h3 id="3-Respository（仓库）"><a href="#3-Respository（仓库）" class="headerlink" title="3. Respository（仓库）"></a>3. <code>Respository</code>（仓库）</h3><p>集中存放<code>image</code>的场所。跟 <code>github</code>一样，分为公有和私有仓。镜像的分门别类是通过<code>tag</code>进行的。</p>
-<p>未完待续…</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/08/Docker/%E5%88%9D%E8%AF%86Docker/" data-id="ck6thsxno000hukqs45cbgrn0" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag">微服务</a></li></ul>
 
 
     </footer>
@@ -715,7 +726,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/Book/" style="font-size: 10px;">Book</a> <a href="/tags/Docker/" style="font-size: 18px;">Docker</a> <a href="/tags/Dockerfile/" style="font-size: 10px;">Dockerfile</a> <a href="/tags/Easy-Coding/" style="font-size: 12px;">Easy Coding</a> <a href="/tags/Effective-Java/" style="font-size: 10px;">Effective Java</a> <a href="/tags/Exception/" style="font-size: 10px;">Exception</a> <a href="/tags/Java/" style="font-size: 14px;">Java</a> <a href="/tags/Singleton/" style="font-size: 10px;">Singleton</a> <a href="/tags/design-Mode/" style="font-size: 10px;">design Mode</a> <a href="/tags/event/" style="font-size: 12px;">event</a> <a href="/tags/go/" style="font-size: 12px;">go</a> <a href="/tags/http/" style="font-size: 10px;">http</a> <a href="/tags/java/" style="font-size: 20px;">java</a> <a href="/tags/jdk/" style="font-size: 10px;">jdk</a> <a href="/tags/js/" style="font-size: 10px;">js</a> <a href="/tags/k8s/" style="font-size: 16px;">k8s</a> <a href="/tags/life/" style="font-size: 10px;">life</a> <a href="/tags/pend/" style="font-size: 12px;">pend</a> <a href="/tags/pending/" style="font-size: 10px;">pending</a> <a href="/tags/pending/" style="font-size: 10px;">pending...</a> <a href="/tags/publisher/" style="font-size: 10px;">publisher</a> <a href="/tags/spring/" style="font-size: 16px;">spring</a> <a href="/tags/thinking/" style="font-size: 10px;">thinking</a> <a href="/tags/timestamp/" style="font-size: 10px;">timestamp</a> <a href="/tags/web/" style="font-size: 10px;">web</a> <a href="/tags/%E5%86%85%E9%83%A8%E7%B1%BB/" style="font-size: 10px;">内部类</a> <a href="/tags/%E5%89%8D%E7%AB%AF/" style="font-size: 10px;">前端</a> <a href="/tags/%E5%AE%89%E5%85%A8/" style="font-size: 10px;">安全</a> <a href="/tags/%E5%AE%B9%E5%99%A8/" style="font-size: 10px;">容器</a> <a href="/tags/%E5%B7%A5%E4%BD%9C/" style="font-size: 10px;">工作</a> <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" style="font-size: 14px;">微服务</a> <a href="/tags/%E6%80%9D%E8%80%83/" style="font-size: 10px;">思考</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE/" style="font-size: 10px;">网络配置</a> <a href="/tags/%E8%8B%A6%E7%97%9B/" style="font-size: 10px;">苦痛</a> <a href="/tags/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/" style="font-size: 10px;">观察者模式</a>
+      <a href="/tags/Book/" style="font-size: 10px;">Book</a> <a href="/tags/Docker/" style="font-size: 18.33px;">Docker</a> <a href="/tags/Dockerfile/" style="font-size: 10px;">Dockerfile</a> <a href="/tags/Easy-Coding/" style="font-size: 11.67px;">Easy Coding</a> <a href="/tags/Effective-Java/" style="font-size: 10px;">Effective Java</a> <a href="/tags/Exception/" style="font-size: 10px;">Exception</a> <a href="/tags/Java/" style="font-size: 13.33px;">Java</a> <a href="/tags/Singleton/" style="font-size: 10px;">Singleton</a> <a href="/tags/design-Mode/" style="font-size: 10px;">design Mode</a> <a href="/tags/event/" style="font-size: 13.33px;">event</a> <a href="/tags/go/" style="font-size: 11.67px;">go</a> <a href="/tags/http/" style="font-size: 10px;">http</a> <a href="/tags/java/" style="font-size: 20px;">java</a> <a href="/tags/jdk/" style="font-size: 10px;">jdk</a> <a href="/tags/js/" style="font-size: 10px;">js</a> <a href="/tags/k8s/" style="font-size: 15px;">k8s</a> <a href="/tags/life/" style="font-size: 10px;">life</a> <a href="/tags/pend/" style="font-size: 11.67px;">pend</a> <a href="/tags/pending/" style="font-size: 10px;">pending</a> <a href="/tags/pending/" style="font-size: 10px;">pending...</a> <a href="/tags/publisher/" style="font-size: 10px;">publisher</a> <a href="/tags/spring/" style="font-size: 16.67px;">spring</a> <a href="/tags/thinking/" style="font-size: 10px;">thinking</a> <a href="/tags/timestamp/" style="font-size: 10px;">timestamp</a> <a href="/tags/web/" style="font-size: 10px;">web</a> <a href="/tags/%E5%86%85%E9%83%A8%E7%B1%BB/" style="font-size: 10px;">内部类</a> <a href="/tags/%E5%89%8D%E7%AB%AF/" style="font-size: 10px;">前端</a> <a href="/tags/%E5%AE%89%E5%85%A8/" style="font-size: 10px;">安全</a> <a href="/tags/%E5%AE%B9%E5%99%A8/" style="font-size: 10px;">容器</a> <a href="/tags/%E5%B7%A5%E4%BD%9C/" style="font-size: 10px;">工作</a> <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" style="font-size: 13.33px;">微服务</a> <a href="/tags/%E6%80%9D%E8%80%83/" style="font-size: 10px;">思考</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE/" style="font-size: 10px;">网络配置</a> <a href="/tags/%E8%8B%A6%E7%97%9B/" style="font-size: 10px;">苦痛</a> <a href="/tags/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/" style="font-size: 10px;">观察者模式</a>
     </div>
   </div>
 
@@ -737,6 +748,10 @@
       <ul>
         
           <li>
+            <a href="/2020/02/23/spring/spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E9%80%BB%E8%BE%91%E7%AE%80%E8%AF%BB/">spring中事件逻辑简读</a>
+          </li>
+        
+          <li>
             <a href="/2020/02/19/spring/spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E7%9A%84%E7%AE%80%E5%8D%95%E5%BA%94%E7%94%A8/">spring中事件的简单应用</a>
           </li>
         
@@ -750,10 +765,6 @@
         
           <li>
             <a href="/2020/02/08/other/hello-world/">Hello World</a>
-          </li>
-        
-          <li>
-            <a href="/2020/02/08/angularjs1.0/1.angularjs%E5%85%A5%E9%97%A8/">angularjs1.0/1.angularjs入门</a>
           </li>
         
       </ul>
