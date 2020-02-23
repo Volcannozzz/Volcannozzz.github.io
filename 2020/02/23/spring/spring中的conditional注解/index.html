@@ -5,21 +5,21 @@
   
 
   
-  <title>spring中事件逻辑简读 | Volcanno</title>
+  <title>spring中的conditional注解 | Volcanno</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="简单写一下spring中事件的实现. 框架启动时,会把被listen注解的方法收集起来.当发布者publisher把事件发布委托给ApplicationEventPublisher,这个bean其实在spring中已经提前创建好了. 其实提前创建的这个bean,是AbstractApplicationContext子类,这个类中实现了publishEvent方法,而该方法由委托给了上下文中存在的A">
+  <meta name="description" content="摘自源码注释:  Indicates that a component is only eligible for registration when all {@linkplain #value specified conditions} match.  该注解是指定component被注册的条件. demo: github; conditional是如何起作用的?invokeBeanFactor">
 <meta property="og:type" content="article">
-<meta property="og:title" content="spring中事件逻辑简读">
-<meta property="og:url" content="http://yoursite.com/2020/02/23/spring/spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E9%80%BB%E8%BE%91%E7%AE%80%E8%AF%BB/index.html">
+<meta property="og:title" content="spring中的conditional注解">
+<meta property="og:url" content="http://yoursite.com/2020/02/23/spring/spring%E4%B8%AD%E7%9A%84conditional%E6%B3%A8%E8%A7%A3/index.html">
 <meta property="og:site_name" content="Volcanno">
-<meta property="og:description" content="简单写一下spring中事件的实现. 框架启动时,会把被listen注解的方法收集起来.当发布者publisher把事件发布委托给ApplicationEventPublisher,这个bean其实在spring中已经提前创建好了. 其实提前创建的这个bean,是AbstractApplicationContext子类,这个类中实现了publishEvent方法,而该方法由委托给了上下文中存在的A">
+<meta property="og:description" content="摘自源码注释:  Indicates that a component is only eligible for registration when all {@linkplain #value specified conditions} match.  该注解是指定component被注册的条件. demo: github; conditional是如何起作用的?invokeBeanFactor">
 <meta property="og:locale" content="zh">
-<meta property="article:published_time" content="2020-02-22T16:42:39.000Z">
-<meta property="article:modified_time" content="2020-02-23T03:54:41.884Z">
+<meta property="article:published_time" content="2020-02-23T13:57:03.000Z">
+<meta property="article:modified_time" content="2020-02-23T14:04:25.157Z">
 <meta property="article:author" content="Volcanno Vayne">
 <meta property="article:tag" content="java">
 <meta property="article:tag" content="spring">
-<meta property="article:tag" content="event">
+<meta property="article:tag" content="annotation">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternate" href="/atom.xml" title="Volcanno" type="application/atom+xml">
@@ -81,10 +81,10 @@
 </header>
 
       <div class="outer">
-        <section id="main"><article id="post-spring/spring中事件逻辑简读" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-spring/spring中的conditional注解" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2020/02/23/spring/spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E9%80%BB%E8%BE%91%E7%AE%80%E8%AF%BB/" class="article-date">
-  <time datetime="2020-02-22T16:42:39.000Z" itemprop="datePublished">2020-02-23</time>
+    <a href="/2020/02/23/spring/spring%E4%B8%AD%E7%9A%84conditional%E6%B3%A8%E8%A7%A3/" class="article-date">
+  <time datetime="2020-02-23T13:57:03.000Z" itemprop="datePublished">2020-02-23</time>
 </a>
     
   <div class="article-category">
@@ -99,7 +99,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      spring中事件逻辑简读
+      spring中的conditional注解
     </h1>
   
 
@@ -107,19 +107,21 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>简单写一下<code>spring</code>中事件的实现.</p>
-<p>框架启动时,会把被<code>listen</code>注解的方法收集起来.当发布者<code>publisher</code>把事件发布委托给<code>ApplicationEventPublisher</code>,这个<code>bean</code>其实在<code>spring</code>中已经提前创建好了.</p>
-<p>其实提前创建的这个<code>bean</code>,是<code>AbstractApplicationContext</code>子类,这个类中实现了<code>publishEvent</code>方法,而该方法由委托给了上下文中存在的<code>ApplicationEventMulticaster</code>进行处理.</p>
-<hr>
-<p>未完待续,后面会重新仔细分析<code>spring</code>中事件处理的实现.</p>
+        <p>摘自源码注释:</p>
+<blockquote>
+<p>Indicates that a component is only eligible for registration when all {@linkplain #value specified conditions} match.</p>
+</blockquote>
+<p>该注解是指定<code>component</code>被注册的条件.</p>
+<p>demo: <a href="https://github.com/Volcannozzz/springDemo/tree/master/src/main/java/com/volcanno/spring/conditional" target="_blank" rel="noopener">github</a>;</p>
+<h2 id="conditional是如何起作用的"><a href="#conditional是如何起作用的" class="headerlink" title="conditional是如何起作用的?"></a><code>conditional</code>是如何起作用的?</h2><p><code>invokeBeanFactoryPostProcessors(beanFactory);</code></p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2020/02/23/spring/spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E9%80%BB%E8%BE%91%E7%AE%80%E8%AF%BB/" data-id="ck6z3ubhr002otkqsfqcqg9kw" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2020/02/23/spring/spring%E4%B8%AD%E7%9A%84conditional%E6%B3%A8%E8%A7%A3/" data-id="ck6z3ubh80023tkqscku6gmg1" class="article-share-link">Share</a>
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/event/" rel="tag">event</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/spring/" rel="tag">spring</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/annotation/" rel="tag">annotation</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/spring/" rel="tag">spring</a></li></ul>
 
 
     </footer>
@@ -128,19 +130,10 @@
     
 <nav id="article-nav">
   
-    <a href="/2020/02/23/spring/componentScan%E6%B3%A8%E8%A7%A3/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          componentScan注解
-        
-      </div>
-    </a>
   
-  
-    <a href="/2020/02/19/spring/spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E7%9A%84%E7%AE%80%E5%8D%95%E5%BA%94%E7%94%A8/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2020/02/23/spring/componentScan%E6%B3%A8%E8%A7%A3/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">spring中事件的简单应用</div>
+      <div class="article-nav-title">componentScan注解</div>
     </a>
   
 </nav>
