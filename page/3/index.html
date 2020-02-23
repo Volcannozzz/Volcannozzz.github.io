@@ -76,6 +76,84 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-k8s/k8s中的others" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/01/21/k8s/k8s%E4%B8%AD%E7%9A%84others/" class="article-date">
+  <time datetime="2019-01-21T15:41:31.000Z" itemprop="datePublished">2019-01-21</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/k8s/">k8s</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/01/21/k8s/k8s%E4%B8%AD%E7%9A%84others/">k8s中的others</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="volume"><a href="#volume" class="headerlink" title="volume"></a><code>volume</code></h2><p>定义：<code>pod</code>中能够被多个容器访问的共享目录，共享目录，共享目录。<br>几个特点：</p>
+<ul>
+<li>定义在<code>pod</code>中，然后被一个<code>pod</code>里的多个容器挂在到具体的目录下；</li>
+<li>生命周期与<code>pod</code>相同，与容器的生命周期不相关；</li>
+<li>容器重启时，<code>volume</code>中的数据不会丢失；（容器重启，<code>pod</code>不会重启吗？这里存疑）<br>使用方法：<br>大多数情况下，在<code>pod</code>上声明一个<code>volume</code>，然后在容器里引用这个<code>volume</code>并<code>mount</code>到容器里的某个目录上；<br>一个示例：<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">template: </span><br><span class="line"> metadata:</span><br><span class="line">  labels:</span><br><span class="line">   app: app-demo</span><br><span class="line">   tier: frontend</span><br><span class="line">   spec:</span><br><span class="line">    volumes:</span><br><span class="line">     - name: datavol</span><br><span class="line">       emptyDir: &#123;&#125;</span><br><span class="line">    containers:</span><br><span class="line">     - name: tomcat-demo</span><br><span class="line">       image: tomcat</span><br><span class="line">       volumeMounts:</span><br><span class="line">        - mountPath: /mydata-data</span><br><span class="line">          name: datavol</span><br><span class="line">    imagePollPolicy: IfNotPresent</span><br></pre></td></tr></table></figure>
+解读：<br>先声明了一个<code>volume</code>为<code>emptyDir</code>类型,名字为<code>datavol</code>。然后在容器里面引用，挂在容器内的<code>/mydata-data</code>，通过名字连接起来。<h3 id="关于volume的类型"><a href="#关于volume的类型" class="headerlink" title="关于volume的类型"></a>关于<code>volume</code>的类型</h3><h4 id="emptyDir"><a href="#emptyDir" class="headerlink" title="emptyDir"></a><code>emptyDir</code></h4>这种类型的挂载卷是在<code>pod</code>分配到<code>Node</code>时创建的。初始内容为空，无需对应宿主机上对应的目录文件，当<code>pod</code>从<code>node</code>上移除时，<code>emptyDir</code>中的数据也会被永久删除。<br>一些用途如下：</li>
+<li>临时空间，例如一些临时目录等等。</li>
+<li>多容器共享。<h4 id="hostPath"><a href="#hostPath" class="headerlink" title="hostPath"></a><code>hostPath</code></h4>跟<code>empty</code>很像，只是不会被删除罢了，然后需要指定一个<code>path</code>属性，这个属性是宿主机上的目录。<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">volumes:</span><br><span class="line">- name: pstorage</span><br><span class="line">  hostPath:</span><br><span class="line">   path: /data</span><br><span class="line">还有一些其他类型的挂载卷，一些网络文件系统等，不再一一列举。</span><br><span class="line"><span class="meta">#</span><span class="bash"><span class="comment"># `PV`</span></span></span><br><span class="line">`volume`是定义在`pod`上的，属于计算资源的一部分。实际上，网络存储是独立于计算资源之外存在的一种实体资源。</span><br><span class="line">`pv`和`volume`的区别：</span><br><span class="line">- `pv`只能是网络存储，不属于任何`node`，但在每个`node`上都可以访问；</span><br><span class="line">- `pv`不是定义在`pod`上的，而是独立于`pod`之外定义；</span><br><span class="line">- `pv`支持多种类型；</span><br><span class="line">另外，`pv`作为一种独立的实体资源，也是需要独立的`yaml`文件来定义。</span><br><span class="line">​```shell</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: PersistentVolume</span><br><span class="line">metadata:</span><br><span class="line"> name: pv0003</span><br><span class="line">spec:</span><br><span class="line"> capacity:</span><br><span class="line">  storage: 5Gi</span><br><span class="line"> accessModes:</span><br><span class="line">  - ReadWritesOnce</span><br><span class="line"> nfs:</span><br><span class="line">  path: /somepath</span><br><span class="line">  server: 172.17.0.2</span><br></pre></td></tr></table></figure>
+重点总结以下<code>accessModes</code>属性，目前类型有：</li>
+<li><code>ReadWriteOnce</code>: 读写权限，并且只能被单个<code>node</code>挂载；</li>
+<li><code>ReadOnlyMany</code>:只读权限，允许被多个<code>node</code>挂载；</li>
+<li><code>ReadWriteMany</code>:读写权限，允许被多个<code>node</code>挂载；<br>如果某个<code>pod</code>想申请某种类型的<code>pv</code>，则需要先定义一个<code>PVC</code>对象：<blockquote>
+<p>个人思考：这里可以看出来，<code>PVC</code>和<code>RC</code>对标，<code>pod</code>和<code>pv</code>对标。</p>
+</blockquote>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">kind: PersistenVolumeClaim</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line"> name myclaim</span><br><span class="line">spec:</span><br><span class="line"> accessModes:</span><br><span class="line">  - ReadWriteOnce</span><br><span class="line"> resources:</span><br><span class="line">  requests:</span><br><span class="line">   storage: 8Gi</span><br></pre></td></tr></table></figure>
+<p>引用上述<code>pvc</code>：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">volumes:</span><br><span class="line"> - name: mypd</span><br><span class="line">  persistenceVOlumeClaim:</span><br><span class="line">   claimName: myclaim</span><br></pre></td></tr></table></figure>
+<p><code>pv</code>也是有状态的：</p>
+<ul>
+<li><code>available</code>，空闲可用;</li>
+<li><code>Bound</code>:已经绑定到某个<code>pvc</code>上；</li>
+<li><code>Released</code>:对应的<code>pvc</code>已经删除，但是资源还没有被集群收回；（？？？）</li>
+<li><code>Failed</code>:<code>pv</code>自动回收失败；</li>
+</ul>
+<h2 id="Namespace"><a href="#Namespace" class="headerlink" title="Namespace"></a><code>Namespace</code></h2><p>用于实现多租户。<br>查看：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get namespaces</span><br></pre></td></tr></table></figure>
+<p>对应的资源描述文件:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Namespace</span><br><span class="line">metadata:</span><br><span class="line"> name: development</span><br></pre></td></tr></table></figure>
+<p>使用：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Pod</span><br><span class="line">metadata:</span><br><span class="line"> name: busybox</span><br><span class="line"> namespace: development</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>此时查看这个<code>pod</code>时需要加参数：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pods --namespace=development</span><br></pre></td></tr></table></figure>
+<h2 id="Annotation"><a href="#Annotation" class="headerlink" title="Annotation"></a><code>Annotation</code></h2><p>跟标签差不多，不过标签作用于标签选择器，在调度中起很大的作用，注解只是单纯的备注作用了。可以记录一些比如<code>release</code>信息啊，时间戳，镜像信息，团队联系信息，电话号码等等。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2019/01/21/k8s/k8s%E4%B8%AD%E7%9A%84others/" data-id="ck6z3hfti001q7sqs6raeakri" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/" rel="tag">k8s</a></li></ul>
+
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-k8s/k8s中的service简要介绍" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2019/01/20/k8s/k8s%E4%B8%AD%E7%9A%84service%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D/" class="article-date">
@@ -126,7 +204,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/20/k8s/k8s%E4%B8%AD%E7%9A%84service%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D/" data-id="ck6xukkaf001oy8qs8dck175p" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/20/k8s/k8s%E4%B8%AD%E7%9A%84service%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D/" data-id="ck6z3hftb001j7sqs69ib85yc" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/" rel="tag">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag">微服务</a></li></ul>
@@ -210,7 +288,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/14/k8s/k8s%E5%85%A5%E9%97%A8/" data-id="ck6xukkat0029y8qs2uh04z1f" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/14/k8s/k8s%E5%85%A5%E9%97%A8/" data-id="ck6z3hftv00277sqsgbyjh7xr" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/" rel="tag">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/pend/" rel="tag">pend</a></li></ul>
@@ -254,7 +332,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/13/Docker/Docker%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/" data-id="ck6xukk9l000vy8qs24ig9hqg" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/13/Docker/Docker%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/" data-id="ck6z3hfs9000g7sqsfpx9c3rv" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/pending/" rel="tag">pending...</a></li></ul>
@@ -314,7 +392,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/13/Docker/Docker%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE/" data-id="ck6xukk9g000ry8qs3klp87iv" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/13/Docker/Docker%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE/" data-id="ck6z3hfsl000r7sqsgklq8clh" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE/" rel="tag">网络配置</a></li></ul>
@@ -372,7 +450,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/13/Docker/Dockerfile%E6%96%B9%E5%BC%8F%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/" data-id="ck6xukk91000dy8qs4cby84v3" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/13/Docker/Dockerfile%E6%96%B9%E5%BC%8F%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAhttp%E6%9C%8D%E5%8A%A1%E5%99%A8/" data-id="ck6z3hfs7000d7sqs9z506fgk" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag">微服务</a></li></ul>
@@ -419,7 +497,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/13/%E5%85%B3%E4%BA%8E%E4%B8%AA%E4%BA%BA%E5%8F%91%E5%B1%95%E7%9A%84%E4%B8%80%E4%BA%9B%E6%80%9D%E8%80%83/" data-id="ck6xukk820003y8qsbia0ea4e" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/13/%E5%85%B3%E4%BA%8E%E4%B8%AA%E4%BA%BA%E5%8F%91%E5%B1%95%E7%9A%84%E4%B8%80%E4%BA%9B%E6%80%9D%E8%80%83/" data-id="ck6z3hfqj00027sqsba4gh9v9" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/life/" rel="tag">life</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/thinking/" rel="tag">thinking</a></li></ul>
@@ -474,7 +552,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/11/Docker/%E7%AC%AC%E4%B8%80%E4%B8%AADockerfile%E7%A4%BA%E4%BE%8B/" data-id="ck6xukk9e000ny8qs4v9dh2n1" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/11/Docker/%E7%AC%AC%E4%B8%80%E4%B8%AADockerfile%E7%A4%BA%E4%BE%8B/" data-id="ck6z3hfsi000n7sqsfuh1bsrq" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Dockerfile/" rel="tag">Dockerfile</a></li></ul>
@@ -550,7 +628,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/10/Docker/Docker%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8/" data-id="ck6xukk95000gy8qs54yx6xdr" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/10/Docker/Docker%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8/" data-id="ck6z3hfsb000h7sqs2oy23m1i" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%AE%B9%E5%99%A8/" rel="tag">容器</a></li></ul>
@@ -603,85 +681,10 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/10/java/%E5%BD%BB%E5%BA%95%E6%90%9E%E6%87%82%E6%97%B6%E9%97%B4%E9%97%AE%E9%A2%98/" data-id="ck6xukka5001ey8qs82zchukn" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2019/01/10/java/%E5%BD%BB%E5%BA%95%E6%90%9E%E6%87%82%E6%97%B6%E9%97%B4%E9%97%AE%E9%A2%98/" data-id="ck6z3hft600197sqs8rgr78u5" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/js/" rel="tag">js</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/timestamp/" rel="tag">timestamp</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%8B%A6%E7%97%9B/" rel="tag">苦痛</a></li></ul>
-
-
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-Docker/Docker基础操作" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/01/09/Docker/Docker%E5%9F%BA%E7%A1%80%E6%93%8D%E4%BD%9C/" class="article-date">
-  <time datetime="2019-01-08T16:10:46.000Z" itemprop="datePublished">2019-01-09</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/Docker/">Docker</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2019/01/09/Docker/Docker%E5%9F%BA%E7%A1%80%E6%93%8D%E4%BD%9C/">Docker基础操作</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>类似于数据库，有增删改查，docker镜像也有这些操作。</p>
-<h2 id="镜像获取"><a href="#镜像获取" class="headerlink" title="镜像获取"></a>镜像获取</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull ubuntu</span><br></pre></td></tr></table></figure>
-<p>这个命令可以把镜像从仓库中下载下来，那仓库的地址又是哪个呢？<br>默认地址是<code>Docker Hub</code>仓库,如果有需要修改仓库地址的需求，可以在<code>/etc/docker/</code>下面新建<code>daemon.json</code>文件，其内容变更如下：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  "registry-mirrors": ["https://registry.docker-cn.com"]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>Note</code>：网址仅是示例。</p>
-<p>上述<code>pull</code>命令拉下来的镜像默认是<code>latest</code>标签的镜像，如果想下载其他标签，例如<code>14.04</code>的镜像，可以使用以下命令：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull ubuntu:14.04</span><br></pre></td></tr></table></figure>
-<h2 id="镜像查看"><a href="#镜像查看" class="headerlink" title="镜像查看"></a>镜像查看</h2><p><code>docker images</code>可以查看本地所有的镜像。<br>以下是输出：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">ubuntu              14.04               7e4b16ae8b23        10 days ago         188MB</span><br><span class="line">ubuntu              latest              1d9c17228a9e        10 days ago         86.7MB</span><br><span class="line">ubuntu              ttag                1d9c17228a9e        10 days ago         86.7MB</span><br></pre></td></tr></table></figure>
-<p><code>IMAGE ID</code>唯一标识了镜像，TAG是标签，其他字段含义均符合字段名含义。这里有2个镜像的<code>IMAGE ID</code>是一样的，这是因为我刚刚通过命令为其中一个镜像打上了标签。打上标签，看着是2个镜像，其实底层是一个镜像。删除的时候，也仅仅是删除<code>tag</code>而已。直到该镜像的最后一个<code>tag</code>删除时，该镜像才会被删除。</p>
-<h2 id="镜像删除"><a href="#镜像删除" class="headerlink" title="镜像删除"></a>镜像删除</h2><p>2种删除方式。</p>
-<h3 id="根据tag删除。"><a href="#根据tag删除。" class="headerlink" title="根据tag删除。"></a>根据<code>tag</code>删除。</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker rmi xxxxxx</span><br></pre></td></tr></table></figure>
-<p>其中<code>xxxxx</code>可以为标签或者<code>ID</code>。</p>
-<h3 id="根据ID删除"><a href="#根据ID删除" class="headerlink" title="根据ID删除"></a>根据<code>ID</code>删除</h3><p>使用<code>docker rmi</code>删除镜像时，会先尝试删除该镜像的所有标签，然后删除该镜像。<br><code>NOTE:</code>当有基于该镜像创建的容器存在时，该镜像是无法被删除的，无论该容器是什么状态。<br>删除容器的命令：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker rm xxxxx</span><br></pre></td></tr></table></figure>
-<p>其中<code>xxxx</code>是容器的<code>id</code>。</p>
-<h2 id="创建容器"><a href="#创建容器" class="headerlink" title="创建容器"></a>创建容器</h2><h3 id="基于已有镜像的容器创建"><a href="#基于已有镜像的容器创建" class="headerlink" title="基于已有镜像的容器创建"></a>基于已有镜像的容器创建</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker run -it ubuntu:latest /bin/bash</span><br><span class="line">touch test</span><br><span class="line">exit</span><br></pre></td></tr></table></figure>
-<p>查看容器<code>id</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker ps -a</span><br></pre></td></tr></table></figure>
-<p>找到<code>id</code>,这里为<code>9xx937d9adf</code>，然后根据这个容器创建一个新的镜像。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker commit -m "create a new image " -a "volcanno" 9xx937d9adf test</span><br></pre></td></tr></table></figure>
-<p>现在就已经创建出来一个新的镜像，<code>docker images</code>查看：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">test                latest              17b8285f6baf        5 minutes ago       86.7MB</span><br><span class="line">ubuntu              14.04               7e4b16ae8b23        10 days ago         188MB</span><br><span class="line">ubuntu              latest              1d9c17228a9e        10 days ago         86.7MB</span><br><span class="line">ubuntu              ttag                1d9c17228a9e        10 days ago         86.7MB</span><br></pre></td></tr></table></figure>
-<p>可以看到<code>test</code>仓库有了一个新镜像。</p>
-<h3 id="根据模板创建镜像"><a href="#根据模板创建镜像" class="headerlink" title="根据模板创建镜像"></a>根据模板创建镜像</h3><p>根据模板创建镜像，指的是根据操作系统模板文件在本地仓库导入一个镜像：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cat ubuntu-14.04-x86_64-minimal.tar.gz|docker import - ubuntu:14.04</span><br></pre></td></tr></table></figure>
-<h3 id="镜像存入存出"><a href="#镜像存入存出" class="headerlink" title="镜像存入存出"></a>镜像存入存出</h3><p>存入存出指的是可以将镜像从本地文件的形式导入本地镜像库，或者从本地镜像库导出为本地文件，这样可以文件的形式进行迁移。</p>
-<h4 id="镜像导出"><a href="#镜像导出" class="headerlink" title="镜像导出"></a>镜像导出</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker save -o ubuntu_14.04.tar ubuntu:latest</span><br></pre></td></tr></table></figure>
-<p>上面命令的含义是将本地镜像库中<code>ubuntu:latest</code>导出到本地，本地名字为<code>ubuntu_14.04.tar</code>。</p>
-<h4 id="镜像导入"><a href="#镜像导入" class="headerlink" title="镜像导入"></a>镜像导入</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker load &lt; ubuntu_14.04.tar</span><br></pre></td></tr></table></figure>
-<h3 id="镜像上传"><a href="#镜像上传" class="headerlink" title="镜像上传"></a>镜像上传</h3><p>从本地仓库上传到<code>DockerHub</code>官方仓库。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker push ubuntu:latest</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/09/Docker/Docker%E5%9F%BA%E7%A1%80%E6%93%8D%E4%BD%9C/" data-id="ck6xukk90000cy8qsb7rcdwwt" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li></ul>
 
 
     </footer>
@@ -716,7 +719,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Book/" rel="tag">Book</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Dockerfile/" rel="tag">Dockerfile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Easy-Coding/" rel="tag">Easy Coding</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Effective-Java/" rel="tag">Effective Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Exception/" rel="tag">Exception</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Singleton/" rel="tag">Singleton</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design-Mode/" rel="tag">design Mode</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/event/" rel="tag">event</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/go/" rel="tag">go</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jdk/" rel="tag">jdk</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/js/" rel="tag">js</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/" rel="tag">k8s</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/life/" rel="tag">life</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pend/" rel="tag">pend</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pending/" rel="tag">pending</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pending/" rel="tag">pending...</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/publisher/" rel="tag">publisher</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/spring/" rel="tag">spring</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/thinking/" rel="tag">thinking</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/timestamp/" rel="tag">timestamp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web/" rel="tag">web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E9%83%A8%E7%B1%BB/" rel="tag">内部类</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%8D%E7%AB%AF/" rel="tag">前端</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AE%89%E5%85%A8/" rel="tag">安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AE%B9%E5%99%A8/" rel="tag">容器</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B7%A5%E4%BD%9C/" rel="tag">工作</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag">微服务</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%80%9D%E8%80%83/" rel="tag">思考</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE/" rel="tag">网络配置</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%8B%A6%E7%97%9B/" rel="tag">苦痛</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/" rel="tag">观察者模式</a></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Book/" rel="tag">Book</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Dockerfile/" rel="tag">Dockerfile</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Easy-Coding/" rel="tag">Easy Coding</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Effective-Java/" rel="tag">Effective Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Exception/" rel="tag">Exception</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Singleton/" rel="tag">Singleton</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/annotation/" rel="tag">annotation</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/componentScan/" rel="tag">componentScan</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/design-Mode/" rel="tag">design Mode</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/event/" rel="tag">event</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/go/" rel="tag">go</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http/" rel="tag">http</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/jdk/" rel="tag">jdk</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/js/" rel="tag">js</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/" rel="tag">k8s</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/life/" rel="tag">life</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pend/" rel="tag">pend</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pending/" rel="tag">pending</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pending/" rel="tag">pending...</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/publisher/" rel="tag">publisher</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/spring/" rel="tag">spring</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/thinking/" rel="tag">thinking</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/timestamp/" rel="tag">timestamp</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web/" rel="tag">web</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E9%83%A8%E7%B1%BB/" rel="tag">内部类</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%8D%E7%AB%AF/" rel="tag">前端</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AE%89%E5%85%A8/" rel="tag">安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AE%B9%E5%99%A8/" rel="tag">容器</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B7%A5%E4%BD%9C/" rel="tag">工作</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag">微服务</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%80%9D%E8%80%83/" rel="tag">思考</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE/" rel="tag">网络配置</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%8B%A6%E7%97%9B/" rel="tag">苦痛</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/" rel="tag">观察者模式</a></li></ul>
     </div>
   </div>
 
@@ -726,7 +729,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/Book/" style="font-size: 10px;">Book</a> <a href="/tags/Docker/" style="font-size: 18.33px;">Docker</a> <a href="/tags/Dockerfile/" style="font-size: 10px;">Dockerfile</a> <a href="/tags/Easy-Coding/" style="font-size: 11.67px;">Easy Coding</a> <a href="/tags/Effective-Java/" style="font-size: 10px;">Effective Java</a> <a href="/tags/Exception/" style="font-size: 10px;">Exception</a> <a href="/tags/Java/" style="font-size: 13.33px;">Java</a> <a href="/tags/Singleton/" style="font-size: 10px;">Singleton</a> <a href="/tags/design-Mode/" style="font-size: 10px;">design Mode</a> <a href="/tags/event/" style="font-size: 13.33px;">event</a> <a href="/tags/go/" style="font-size: 11.67px;">go</a> <a href="/tags/http/" style="font-size: 10px;">http</a> <a href="/tags/java/" style="font-size: 20px;">java</a> <a href="/tags/jdk/" style="font-size: 10px;">jdk</a> <a href="/tags/js/" style="font-size: 10px;">js</a> <a href="/tags/k8s/" style="font-size: 15px;">k8s</a> <a href="/tags/life/" style="font-size: 10px;">life</a> <a href="/tags/pend/" style="font-size: 11.67px;">pend</a> <a href="/tags/pending/" style="font-size: 10px;">pending</a> <a href="/tags/pending/" style="font-size: 10px;">pending...</a> <a href="/tags/publisher/" style="font-size: 10px;">publisher</a> <a href="/tags/spring/" style="font-size: 16.67px;">spring</a> <a href="/tags/thinking/" style="font-size: 10px;">thinking</a> <a href="/tags/timestamp/" style="font-size: 10px;">timestamp</a> <a href="/tags/web/" style="font-size: 10px;">web</a> <a href="/tags/%E5%86%85%E9%83%A8%E7%B1%BB/" style="font-size: 10px;">内部类</a> <a href="/tags/%E5%89%8D%E7%AB%AF/" style="font-size: 10px;">前端</a> <a href="/tags/%E5%AE%89%E5%85%A8/" style="font-size: 10px;">安全</a> <a href="/tags/%E5%AE%B9%E5%99%A8/" style="font-size: 10px;">容器</a> <a href="/tags/%E5%B7%A5%E4%BD%9C/" style="font-size: 10px;">工作</a> <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" style="font-size: 13.33px;">微服务</a> <a href="/tags/%E6%80%9D%E8%80%83/" style="font-size: 10px;">思考</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE/" style="font-size: 10px;">网络配置</a> <a href="/tags/%E8%8B%A6%E7%97%9B/" style="font-size: 10px;">苦痛</a> <a href="/tags/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/" style="font-size: 10px;">观察者模式</a>
+      <a href="/tags/Book/" style="font-size: 10px;">Book</a> <a href="/tags/Docker/" style="font-size: 18.33px;">Docker</a> <a href="/tags/Dockerfile/" style="font-size: 10px;">Dockerfile</a> <a href="/tags/Easy-Coding/" style="font-size: 11.67px;">Easy Coding</a> <a href="/tags/Effective-Java/" style="font-size: 10px;">Effective Java</a> <a href="/tags/Exception/" style="font-size: 10px;">Exception</a> <a href="/tags/Java/" style="font-size: 13.33px;">Java</a> <a href="/tags/Singleton/" style="font-size: 10px;">Singleton</a> <a href="/tags/annotation/" style="font-size: 10px;">annotation</a> <a href="/tags/componentScan/" style="font-size: 10px;">componentScan</a> <a href="/tags/design-Mode/" style="font-size: 10px;">design Mode</a> <a href="/tags/event/" style="font-size: 13.33px;">event</a> <a href="/tags/go/" style="font-size: 11.67px;">go</a> <a href="/tags/http/" style="font-size: 10px;">http</a> <a href="/tags/java/" style="font-size: 20px;">java</a> <a href="/tags/jdk/" style="font-size: 10px;">jdk</a> <a href="/tags/js/" style="font-size: 10px;">js</a> <a href="/tags/k8s/" style="font-size: 15px;">k8s</a> <a href="/tags/life/" style="font-size: 10px;">life</a> <a href="/tags/pend/" style="font-size: 11.67px;">pend</a> <a href="/tags/pending/" style="font-size: 10px;">pending</a> <a href="/tags/pending/" style="font-size: 10px;">pending...</a> <a href="/tags/publisher/" style="font-size: 10px;">publisher</a> <a href="/tags/spring/" style="font-size: 16.67px;">spring</a> <a href="/tags/thinking/" style="font-size: 10px;">thinking</a> <a href="/tags/timestamp/" style="font-size: 10px;">timestamp</a> <a href="/tags/web/" style="font-size: 10px;">web</a> <a href="/tags/%E5%86%85%E9%83%A8%E7%B1%BB/" style="font-size: 10px;">内部类</a> <a href="/tags/%E5%89%8D%E7%AB%AF/" style="font-size: 10px;">前端</a> <a href="/tags/%E5%AE%89%E5%85%A8/" style="font-size: 10px;">安全</a> <a href="/tags/%E5%AE%B9%E5%99%A8/" style="font-size: 10px;">容器</a> <a href="/tags/%E5%B7%A5%E4%BD%9C/" style="font-size: 10px;">工作</a> <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" style="font-size: 13.33px;">微服务</a> <a href="/tags/%E6%80%9D%E8%80%83/" style="font-size: 10px;">思考</a> <a href="/tags/%E7%BD%91%E7%BB%9C%E9%85%8D%E7%BD%AE/" style="font-size: 10px;">网络配置</a> <a href="/tags/%E8%8B%A6%E7%97%9B/" style="font-size: 10px;">苦痛</a> <a href="/tags/%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F/" style="font-size: 10px;">观察者模式</a>
     </div>
   </div>
 
@@ -748,6 +751,10 @@
       <ul>
         
           <li>
+            <a href="/2020/02/23/spring/componentScan%E6%B3%A8%E8%A7%A3/">componentScan注解</a>
+          </li>
+        
+          <li>
             <a href="/2020/02/23/spring/spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E9%80%BB%E8%BE%91%E7%AE%80%E8%AF%BB/">spring中事件逻辑简读</a>
           </li>
         
@@ -761,10 +768,6 @@
         
           <li>
             <a href="/2020/02/09/spring/spring%E4%B8%AD%E7%9A%84%E5%AE%9A%E6%97%B6%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6/">spring中的定时任务调度</a>
-          </li>
-        
-          <li>
-            <a href="/2020/02/08/other/hello-world/">Hello World</a>
           </li>
         
       </ul>
