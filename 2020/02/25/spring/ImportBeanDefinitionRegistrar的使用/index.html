@@ -5,20 +5,20 @@
   
 
   
-  <title>k8s中的service简要介绍 | Volcanno</title>
+  <title>ImportBeanDefinitionRegistrar的使用 | Volcanno</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="service是k8s中最核心的资源对象之一。 RC的作用是维持pod集群的一系列数量指标，保证service的服务能力和服务质量始终处于预期的标准范围内。 k8s中的service定义了一个服务的访问入口地址，这个地址是提供为集群内的其他service使用的。service提供的cluster ip，只在k8s内部有意义。 每个service背后对应的都是一个pod集群，所以访问一个服务的时候，">
+  <meta name="description" content="一句话概括:  该接口给开发者提供了一种给bean工厂增加bd的方式.  为什么会有这种需求? 考虑某些类,我们只能获取到jar包,且想把这些类的实例交由spring管理.首先,我们无法通过在类上加@Component注解这种方式来实现;其次,可以用@Bean这种方式实现需求. 但是ImportBeanDefinitionRegistrar接口提供了更多的灵活性.其实看看这个接口的定义就能知道了.">
 <meta property="og:type" content="article">
-<meta property="og:title" content="k8s中的service简要介绍">
-<meta property="og:url" content="http://yoursite.com/2019/01/20/k8s/k8s%E4%B8%AD%E7%9A%84service%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D/index.html">
+<meta property="og:title" content="ImportBeanDefinitionRegistrar的使用">
+<meta property="og:url" content="http://yoursite.com/2020/02/25/spring/ImportBeanDefinitionRegistrar%E7%9A%84%E4%BD%BF%E7%94%A8/index.html">
 <meta property="og:site_name" content="Volcanno">
-<meta property="og:description" content="service是k8s中最核心的资源对象之一。 RC的作用是维持pod集群的一系列数量指标，保证service的服务能力和服务质量始终处于预期的标准范围内。 k8s中的service定义了一个服务的访问入口地址，这个地址是提供为集群内的其他service使用的。service提供的cluster ip，只在k8s内部有意义。 每个service背后对应的都是一个pod集群，所以访问一个服务的时候，">
+<meta property="og:description" content="一句话概括:  该接口给开发者提供了一种给bean工厂增加bd的方式.  为什么会有这种需求? 考虑某些类,我们只能获取到jar包,且想把这些类的实例交由spring管理.首先,我们无法通过在类上加@Component注解这种方式来实现;其次,可以用@Bean这种方式实现需求. 但是ImportBeanDefinitionRegistrar接口提供了更多的灵活性.其实看看这个接口的定义就能知道了.">
 <meta property="og:locale" content="zh">
-<meta property="article:published_time" content="2019-01-20T12:32:37.000Z">
-<meta property="article:modified_time" content="2020-02-08T13:07:26.438Z">
+<meta property="article:published_time" content="2020-02-25T14:09:37.000Z">
+<meta property="article:modified_time" content="2020-02-25T14:19:31.792Z">
 <meta property="article:author" content="Volcanno Vayne">
-<meta property="article:tag" content="微服务">
-<meta property="article:tag" content="k8s">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="spring">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternate" href="/atom.xml" title="Volcanno" type="application/atom+xml">
@@ -80,12 +80,16 @@
 </header>
 
       <div class="outer">
-        <section id="main"><article id="post-k8s/k8s中的service简要介绍" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-spring/ImportBeanDefinitionRegistrar的使用" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2019/01/20/k8s/k8s%E4%B8%AD%E7%9A%84service%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D/" class="article-date">
-  <time datetime="2019-01-20T12:32:37.000Z" itemprop="datePublished">2019-01-20</time>
+    <a href="/2020/02/25/spring/ImportBeanDefinitionRegistrar%E7%9A%84%E4%BD%BF%E7%94%A8/" class="article-date">
+  <time datetime="2020-02-25T14:09:37.000Z" itemprop="datePublished">2020-02-25</time>
 </a>
     
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/java/">java</a>►<a class="article-category-link" href="/categories/java/spring/">spring</a>
+  </div>
+
   </div>
   <div class="article-inner">
     
@@ -94,7 +98,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      k8s中的service简要介绍
+      ImportBeanDefinitionRegistrar的使用
     </h1>
   
 
@@ -102,38 +106,19 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p><code>service</code>是<code>k8s</code>中最核心的资源对象之一。</p>
-<p><code>RC</code>的作用是维持<code>pod</code>集群的一系列数量指标，保证<code>service</code>的服务能力和服务质量始终处于预期的标准范围内。</p>
-<p><code>k8s</code>中的<code>service</code>定义了一个服务的访问入口地址，这个地址是提供为集群内的其他<code>service</code>使用的。<code>service</code>提供的<code>cluster ip</code>，只在<code>k8s</code>内部有意义。</p>
-<p>每个<code>service</code>背后对应的都是一个<code>pod</code>集群，所以访问一个服务的时候，必定需要一个负载均衡算法来支撑。</p>
-<h2 id="k8s中服务通信"><a href="#k8s中服务通信" class="headerlink" title="k8s中服务通信"></a><code>k8s</code>中服务通信</h2><p>运行在<code>node</code>上的<code>kube-proxy</code>进程其实就是一个智能的软件负载均衡器，它负责把本<code>node</code>上对<code>service</code>的请求转发到后端的某个<code>pod</code>上，并在内部实现服务的负载均衡和会话保持机制。与<code>service</code>通信的时候，肯定是不能直接使用<code>ip</code>地址（因为未知），会用服务名来进行通信，因此就需要一种机制来做<code>ip</code>到服务名的映射。显然，<code>dns</code>正好符合要求（环境变量注入的方式也可以提供相同的功能）。</p>
-<p>一个典型的<code>service</code>定义文件如下：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line"> name: tomcat-service</span><br><span class="line">spec:</span><br><span class="line"> ports:</span><br><span class="line"> - port: 8080</span><br><span class="line"> selector:</span><br><span class="line">  tier: frontend</span><br></pre></td></tr></table></figure>
-
-<p>可以看到，服务<code>tomcat-service</code>的服务端口为<code>8080</code>，拥有<code>tier:frontend</code>标签的<code>pod</code>都属于他。</p>
-<p>创建命令：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create -f tomcat-server.yaml</span><br></pre></td></tr></table></figure>
-
-<h2 id="服务发现机制"><a href="#服务发现机制" class="headerlink" title="服务发现机制"></a>服务发现机制</h2><p>一句话概括，服务发现的过程，就是把服务名替换为<code>ip:port</code>的过程。</p>
-<h3 id="环境变量"><a href="#环境变量" class="headerlink" title="环境变量"></a>环境变量</h3><p>在<code>pod</code>启动的时候，按照一定规范和约定，在<code>pod</code> 的环境变量中，注入所有的服务的信息。<code>pod</code>要访问某个服务时，就从自己本地的环境变量取出。</p>
-<p>考虑到环境变量的方式获取<code>service</code>的<code>ip</code>和<code>port</code>的方式仍然不太方便，不够直观，后来<code>k8s</code>通过<code>Add-on</code>增值包的方式引入了<code>DNS</code>系统，把服务名作为<code>DNS</code>域名，这样以来，程序就可以直接使用服务名来建立通信连接了。</p>
-<h2 id="外部系统访问service的问题"><a href="#外部系统访问service的问题" class="headerlink" title="外部系统访问service的问题"></a>外部系统访问<code>service</code>的问题</h2><p>三种<code>ip</code>：</p>
+        <p>一句话概括:</p>
 <ul>
-<li><code>Node IP</code>: 实打实的网卡的<code>ip</code>；</li>
-<li><code>Pod IP</code>: 根据<code>docker0</code>网桥的<code>ip</code>地址段进行分配的，通常是一个虚拟的二层网络。另外，<code>k8s</code>要求位于不同<code>node</code>上的<code>pod</code>能够彼此直接通信，所以<code>k8s</code>里的<code>pod</code>能够直接访问另外一个<code>pod</code>。</li>
-<li><code>Cluster IP</code>:虚拟的<code>IP</code>。属于<code>k8s</code>集群这样一个封闭的空间。如果需要提供外部访问，要做一些额外的工作。</li>
+<li>该接口给开发者提供了一种给<code>bean</code>工厂增加<code>bd</code>的方式.</li>
 </ul>
-<p>某些服务模块就是用来提供给外部使用的，那么用户如何访问？<br><code>service</code>定义扩展：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line"> name: tomcat-service</span><br><span class="line">spec:</span><br><span class="line"> type: NOdePort</span><br><span class="line"> ports:</span><br><span class="line">  - port: 8080</span><br><span class="line">    nodePort: 31002</span><br><span class="line"> selector:</span><br><span class="line">  tier: frontend</span><br></pre></td></tr></table></figure>
-<p>这样，服务<code>31002</code>就暴露出来了。<br><code>NodePort</code>的实现方式是，在<code>k8s</code>集群的每个<code>NOde</code>上为需要外部访问的<code>service</code>开启一个对应的<code>tcp</code>监听端口，外部系统只要用任意一个<code>node</code>的<code>IP</code>地址+具体的<code>NodePort</code>端口号就可以访问该服务。<br>问题：这种方式仍未解决所有问题，比如负载均衡问题，这是就需要一个集群之外的负载均衡组件来实施负载均衡。</p>
+<p>为什么会有这种需求? 考虑某些类,我们只能获取到<code>jar</code>包,且想把这些类的实例交由<code>spring</code>管理.首先,我们无法通过在类上加<code>@Component</code>注解这种方式来实现;其次,可以用<code>@Bean</code>这种方式实现需求. 但是<code>ImportBeanDefinitionRegistrar</code>接口提供了更多的灵活性.其实看看这个接口的定义就能知道了.</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/01/20/k8s/k8s%E4%B8%AD%E7%9A%84service%E7%AE%80%E8%A6%81%E4%BB%8B%E7%BB%8D/" data-id="ck7amh0yf001k3kqs8krybds2" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2020/02/25/spring/ImportBeanDefinitionRegistrar%E7%9A%84%E4%BD%BF%E7%94%A8/" data-id="ck7amh0yo00213kqs358g4zbw" class="article-share-link">Share</a>
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/" rel="tag">k8s</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag">微服务</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/java/" rel="tag">java</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/spring/" rel="tag">spring</a></li></ul>
 
 
     </footer>
@@ -142,19 +127,10 @@
     
 <nav id="article-nav">
   
-    <a href="/2019/01/21/k8s/k8s%E4%B8%AD%E7%9A%84others/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          k8s中的others
-        
-      </div>
-    </a>
   
-  
-    <a href="/2019/01/14/k8s/k8s%E5%85%A5%E9%97%A8/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2020/02/24/spring/aop-and-spring/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">k8s入门</div>
+      <div class="article-nav-title">aop and spring</div>
     </a>
   
 </nav>
